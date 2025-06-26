@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import requests
+import io
 import plotly.express as px
 from corpus_data import corpus_data, image_urls
 
@@ -100,37 +102,40 @@ else:
 
 st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
-# Key insights table
+# Author-Play Catalogue
 st.markdown("""
 <h2 style='text-align: center; font-family: Georgia, serif;'>🎭 Author-Play Catalogue</h2>
 """, unsafe_allow_html=True)
 
 # Sample data
-data = [
-    ["William Shakespeare", "Hamlet", "Prince of Denmark", 160],
-    ["Christopher Marlowe", "Doctor Faustus", "The Tragical History", 1604],
-    ["Aphra Behn", "The Rover", "The Banish'd Cavaliers", 1677],
-    ["John Webster", "The Duchess of Malfi", "", 1623],
-    ["Ben Jonson", "Volpone", "The Fox", 1606],
-    ["Susanna Centlivre", "The Busy Body", "", 1709],
-    ["Thomas Middleton", "Women Beware Women", "", 1657],
-    ["George Etherege", "The Man of Mode", "Sir Fopling Flutter", 1676],
-    ["John Ford", "'Tis Pity She's a Whore", "", 1633],
-    ["Elizabeth Inchbald", "Lovers' Vows", "", 1798],
-    ["Oscar Wilde", "The Importance of Being Earnest", "", 1895],
-    ["Henrik Ibsen", "A Doll's House", "", 1879],
-    ["George Bernard Shaw", "Pygmalion", "", 1913],
-    ["Lorraine Hansberry", "A Raisin in the Sun", "", 1959],
-    ["Tennessee Williams", "A Streetcar Named Desire", "", 1947],
-    ["Arthur Miller", "Death of a Salesman", "", 1949],
-    ["Caryl Churchill", "Top Girls", "", 1982],
-    ["Sarah Kane", "Blasted", "", 1995],
-    ["Harold Pinter", "The Homecoming", "", 1965],
-    ["Marina Carr", "By the Bog of Cats", "", 1998]
-]
+API_BASE = "https://dracor.org/api/v1/"
 
-columns = ["Author", "Title", "Subtitle", "Year Printed"]
-df = pd.DataFrame(data, columns=columns)
+@st.cache_data
+def fetch_metadata(corpus_name: str) -> pd.DataFrame:
+    url = f"{API_BASE}corpora/{corpus_name}/metadata/csv"
+    resp = requests.get(url)
+    resp.raise_for_status()
+    return pd.read_csv(io.StringIO(resp.text))
+
+# Select corpus
+corpus_code = "als"
+df_meta = fetch_metadata(corpus_code)
+
+# Validate required columns
+required_columns = ["firstAuthor", "title", "subtitle", "yearPrinted"]
+missing = [col for col in required_columns if col not in df_meta.columns]
+
+if missing:
+    st.error(f"Required columns not found in metadata: {missing}")
+    st.stop()
+
+# Prepare and rename for display
+df_show = df_meta[required_columns].rename(columns={
+    "firstAuthor": "Author",
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "yearPrinted": "Year Printed"
+})
 
 # Inject custom scrollable style and display the table
 st.markdown("""
@@ -186,7 +191,7 @@ st.markdown("""
 st.markdown(f"""
 <div class="center-table-container">
     <div class="scroll-table-wrapper">
-        {df.to_html(index=False, escape=False)}
+        {df_show.to_html(index=False, escape=False)}
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -194,7 +199,7 @@ st.markdown(f"""
 st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
 # 📊 Bar chart: Number of Plays per Author
-author_counts = df.groupby("Author").size().reset_index(name="Number of Plays")
+author_counts = df_show.groupby("Author").size().reset_index(name="Number of Plays")
 
 fig = px.bar(
     author_counts,
