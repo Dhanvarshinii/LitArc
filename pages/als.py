@@ -83,7 +83,7 @@ if data:
 
     # Key insights table
     st.markdown("""
-    <h2 style='text-align: center; font-family: Georgia, serif;'>🎭 Corpus Statistics</h2>
+    <h2 style='text-align: center; font-family: Georgia, serif;'>🎭Corpus Statistics</h2>
     """, unsafe_allow_html=True)
 
     # Build the HTML table
@@ -97,45 +97,57 @@ if data:
 
 else:
     st.error("Corpus not found.")
-    
+
+st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+
+# Key insights table
+st.markdown("""
+<h2 style='text-align: center; font-family: Georgia, serif;'>🎭 Author-Play Catalogue</h2>
+""", unsafe_allow_html=True)
 
 # Sample data
 data = [
-    ["William Shakespeare", "Hamlet", "Prince of Denmark", 1603, 12, 3],
-    ["Christopher Marlowe", "Doctor Faustus", "The Tragical History", 1604, 9, 2],
-    ["Aphra Behn", "The Rover", "The Banish'd Cavaliers", 1677, 6, 4],
-    ["John Webster", "The Duchess of Malfi", "", 1623, 7, 2],
-    ["Ben Jonson", "Volpone", "The Fox", 1606, 10, 1],
-    ["Susanna Centlivre", "The Busy Body", "", 1709, 4, 5],
-    ["Thomas Middleton", "Women Beware Women", "", 1657, 5, 6],
-    ["George Etherege", "The Man of Mode", "Sir Fopling Flutter", 1676, 7, 3],
-    ["John Ford", "'Tis Pity She's a Whore", "", 1633, 8, 3],
-    ["Elizabeth Inchbald", "Lovers' Vows", "", 1798, 4, 4],
-    ["Oscar Wilde", "The Importance of Being Earnest", "", 1895, 5, 3],
-    ["Henrik Ibsen", "A Doll's House", "", 1879, 3, 4],
-    ["George Bernard Shaw", "Pygmalion", "", 1913, 4, 4],
-    ["Lorraine Hansberry", "A Raisin in the Sun", "", 1959, 3, 4],
-    ["Tennessee Williams", "A Streetcar Named Desire", "", 1947, 4, 5],
-    ["Arthur Miller", "Death of a Salesman", "", 1949, 6, 1],
-    ["Caryl Churchill", "Top Girls", "", 1982, 2, 7],
-    ["Sarah Kane", "Blasted", "", 1995, 3, 2],
-    ["Harold Pinter", "The Homecoming", "", 1965, 5, 1],
-    ["Marina Carr", "By the Bog of Cats", "", 1998, 3, 4]
+    ["William Shakespeare", "Hamlet", "Prince of Denmark", 160],
+    ["Christopher Marlowe", "Doctor Faustus", "The Tragical History", 1604],
+    ["Aphra Behn", "The Rover", "The Banish'd Cavaliers", 1677],
+    ["John Webster", "The Duchess of Malfi", "", 1623],
+    ["Ben Jonson", "Volpone", "The Fox", 1606],
+    ["Susanna Centlivre", "The Busy Body", "", 1709],
+    ["Thomas Middleton", "Women Beware Women", "", 1657],
+    ["George Etherege", "The Man of Mode", "Sir Fopling Flutter", 1676],
+    ["John Ford", "'Tis Pity She's a Whore", "", 1633],
+    ["Elizabeth Inchbald", "Lovers' Vows", "", 1798],
+    ["Oscar Wilde", "The Importance of Being Earnest", "", 1895],
+    ["Henrik Ibsen", "A Doll's House", "", 1879],
+    ["George Bernard Shaw", "Pygmalion", "", 1913],
+    ["Lorraine Hansberry", "A Raisin in the Sun", "", 1959],
+    ["Tennessee Williams", "A Streetcar Named Desire", "", 1947],
+    ["Arthur Miller", "Death of a Salesman", "", 1949],
+    ["Caryl Churchill", "Top Girls", "", 1982],
+    ["Sarah Kane", "Blasted", "", 1995],
+    ["Harold Pinter", "The Homecoming", "", 1965],
+    ["Marina Carr", "By the Bog of Cats", "", 1998]
 ]
 
-columns = ["Author", "Title", "Subtitle", "Year Printed", "Male Speakers", "Female Speakers"]
+columns = ["Author", "Title", "Subtitle", "Year Printed"]
 df = pd.DataFrame(data, columns=columns)
 
 # Inject custom scrollable style and display the table
 st.markdown("""
 <style>
+.center-table-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
 .scroll-table-wrapper {
     max-height: 400px;
     overflow-y: auto;
     border-radius: 12px;
     box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    margin: 30px auto;
-    width: 130%;
+    width: 90%;
 }
 
 /* Style the actual table */
@@ -172,8 +184,29 @@ st.markdown("""
 
 # Render the table as scrollable HTML
 st.markdown(f"""
-<div class="scroll-table-wrapper">
-{df.to_html(index=False, escape=False)}
+<div class="center-table-container">
+    <div class="scroll-table-wrapper">
+        {df.to_html(index=False, escape=False)}
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+
+# 📊 Bar chart: Number of Plays per Author
+author_counts = df.groupby("Author").size().reset_index(name="Number of Plays")
+
+fig = px.bar(
+    author_counts,
+    x="Author",
+    y="Number of Plays",
+    labels={"Author": "Author", "Number of Plays": "Count of Plays"},
+    height=600,
+)
+
+st.markdown("""
+<h2 style='text-align: center; font-family: Georgia, serif;'>🎭 No of Authors per Play</h2>
+""", unsafe_allow_html=True)
+
+# Display the chart
+st.plotly_chart(fig, use_container_width=True)
