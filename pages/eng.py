@@ -51,8 +51,6 @@ h1 {{
 short = "eng"
 data = next((c for c in corpus_data if c[1] == short), None)
 
-# Sample detailed corpus data for table (you can extend this with real data)
-# Using dummy numbers matching your original message:
 corpus_stats = {
     'Plays': 30,
     'Characters': 375,

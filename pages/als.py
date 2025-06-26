@@ -5,6 +5,24 @@ import io
 import plotly.express as px
 from corpus_data import corpus_data, image_urls
 
+st.markdown("""
+<style>
+.litarc-title {
+    font-family: Georgia, serif;
+    font-size: 4em;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    background: linear-gradient(90deg, #8B0000, #111);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+</style>
+<div class="litarc-title">LitArc</div>
+""", unsafe_allow_html=True)
+
 st.markdown(f"""
 <style>
 h1 {{
@@ -208,6 +226,8 @@ fig = px.bar(
     labels={"Author": "Author", "Number of Plays": "Count of Plays"},
     height=600,
 )
+
+fig.update_yaxes(dtick=1)
 
 st.markdown("""
 <h2 style='text-align: center; font-family: Georgia, serif;'>🎭 No of Authors per Play</h2>
