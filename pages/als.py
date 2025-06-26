@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+import plotly.express as px
 from corpus_data import corpus_data, image_urls
 
 st.markdown(f"""
@@ -95,3 +97,83 @@ if data:
 
 else:
     st.error("Corpus not found.")
+    
+
+# Sample data
+data = [
+    ["William Shakespeare", "Hamlet", "Prince of Denmark", 1603, 12, 3],
+    ["Christopher Marlowe", "Doctor Faustus", "The Tragical History", 1604, 9, 2],
+    ["Aphra Behn", "The Rover", "The Banish'd Cavaliers", 1677, 6, 4],
+    ["John Webster", "The Duchess of Malfi", "", 1623, 7, 2],
+    ["Ben Jonson", "Volpone", "The Fox", 1606, 10, 1],
+    ["Susanna Centlivre", "The Busy Body", "", 1709, 4, 5],
+    ["Thomas Middleton", "Women Beware Women", "", 1657, 5, 6],
+    ["George Etherege", "The Man of Mode", "Sir Fopling Flutter", 1676, 7, 3],
+    ["John Ford", "'Tis Pity She's a Whore", "", 1633, 8, 3],
+    ["Elizabeth Inchbald", "Lovers' Vows", "", 1798, 4, 4],
+    ["Oscar Wilde", "The Importance of Being Earnest", "", 1895, 5, 3],
+    ["Henrik Ibsen", "A Doll's House", "", 1879, 3, 4],
+    ["George Bernard Shaw", "Pygmalion", "", 1913, 4, 4],
+    ["Lorraine Hansberry", "A Raisin in the Sun", "", 1959, 3, 4],
+    ["Tennessee Williams", "A Streetcar Named Desire", "", 1947, 4, 5],
+    ["Arthur Miller", "Death of a Salesman", "", 1949, 6, 1],
+    ["Caryl Churchill", "Top Girls", "", 1982, 2, 7],
+    ["Sarah Kane", "Blasted", "", 1995, 3, 2],
+    ["Harold Pinter", "The Homecoming", "", 1965, 5, 1],
+    ["Marina Carr", "By the Bog of Cats", "", 1998, 3, 4]
+]
+
+columns = ["Author", "Title", "Subtitle", "Year Printed", "Male Speakers", "Female Speakers"]
+df = pd.DataFrame(data, columns=columns)
+
+# Inject custom scrollable style and display the table
+st.markdown("""
+<style>
+.scroll-table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    margin: 30px auto;
+    width: 130%;
+}
+
+/* Style the actual table */
+.scroll-table-wrapper table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1.05em;
+}
+
+.scroll-table-wrapper th {
+    background-color: #8B0000;
+    color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 12px 18px;
+    border-bottom: 2px solid #ddd;
+    text-align: center;
+}
+
+.scroll-table-wrapper td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+.scroll-table-wrapper tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Render the table as scrollable HTML
+st.markdown(f"""
+<div class="scroll-table-wrapper">
+{df.to_html(index=False, escape=False)}
+</div>
+""", unsafe_allow_html=True)
+
