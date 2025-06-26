@@ -69,21 +69,42 @@ h1 {{
 short = "als"
 data = next((c for c in corpus_data if c[1] == short), None)
 
-# Sample detailed corpus data for table (you can extend this with real data)
-# Using dummy numbers matching your original message:
-corpus_stats = {
-    'Plays': 30,
-    'Characters': 375,
-    'Male Characters': 232,
-    'Female Characters': 110,
-    'Text Units': 30,
-    'Sp Units': 15092,
-    'Stage Units': 7958,
-    'Word Count Text': 329985,
-    'Word Count Sp': 312184,
-    'Word Count Stage': 44647
-}
+# Fetch live metrics from Dracor API
+API_BASE = "https://dracor.org/api/v1/"
 
+def get_corpus_metrics(corpus_code):
+    url = f"{API_BASE}corpora?include=metrics"
+    resp = requests.get(url)
+    resp.raise_for_status()
+    corpora_data = resp.json()
+
+# Find matching corpus
+    corpus = next((c for c in corpora_data if c["name"] == corpus_code), None)
+    if not corpus:
+        return None
+    
+    m = corpus.get("metrics", {})
+    return {
+        'Plays': m.get('plays'),
+        'Characters': m.get('characters'),
+        'Male Characters': m.get('male'),
+        'Female Characters': m.get('female'),
+        'Spoken Segments': m.get('sp'),
+        'Stage Directions': m.get('stage'),
+        'Total Word Count': sum([
+            m.get('wordcount', {}).get('text', 0),
+            m.get('wordcount', {}).get('sp', 0),
+            m.get('wordcount', {}).get('stage', 0)
+        ]),
+        'Word Count (Spoken Segments)': m.get('wordcount', {}).get('sp'),
+        'Word Count (Stage Directions)': m.get('wordcount', {}).get('stage')
+    }
+
+corpus_stats = get_corpus_metrics(short)
+
+if corpus_stats is None:
+    st.error("Failed to fetch corpus statistics.")
+    
 if data:
     name, _, desc = data
     st.set_page_config(page_title=name, layout="centered")
@@ -91,9 +112,14 @@ if data:
     # Title
     st.markdown(f"<h1>{name}</h1>", unsafe_allow_html=True)
 
-    # Image
-    st.image(image_urls.get(short))
-
+    image_url = image_urls.get(short)
+    if image_url:
+        st.markdown(f"""
+            <div style="display: flex; justify-content: center; margin: 20px 0;">
+                <img src="{image_url}" style="max-width: 100%; height: auto; border-radius: 10px;">
+            </div>
+        """, unsafe_allow_html=True)
+        
     # Description
     st.markdown(f"""
     <div style="font-family: Georgia, serif; font-size: 1.2em; text-align: justify; margin-top: 20px;">
@@ -103,10 +129,10 @@ if data:
 
     # Key insights table
     st.markdown("""
-    <h2 style='text-align: center; font-family: Georgia, serif;'>🎭Corpus Statistics</h2>
+    <h2 style='text-align: center; font-family: Georgia, serif;'>🎭 Corpus Statistics</h2>
     """, unsafe_allow_html=True)
-
-    # Build the HTML table
+    
+ 
     table_html = "<table class='corpus-table'>"
     table_html += "<tr><th>Metric</th><th>Value</th></tr>"
     for key, val in corpus_stats.items():
@@ -117,16 +143,11 @@ if data:
 
 else:
     st.error("Corpus not found.")
-
-st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
-
+    
 # Author-Play Catalogue
 st.markdown("""
 <h2 style='text-align: center; font-family: Georgia, serif;'>🎭 Author-Play Catalogue</h2>
 """, unsafe_allow_html=True)
-
-# Sample data
-API_BASE = "https://dracor.org/api/v1/"
 
 @st.cache_data
 def fetch_metadata(corpus_name: str) -> pd.DataFrame:
@@ -155,7 +176,7 @@ df_show = df_meta[required_columns].rename(columns={
     "yearPrinted": "Year Printed"
 })
 
-# Inject custom scrollable style and display the table
+# Display the table
 st.markdown("""
 <style>
 .center-table-container {
@@ -205,7 +226,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Render the table as scrollable HTML
 st.markdown(f"""
 <div class="center-table-container">
     <div class="scroll-table-wrapper">
