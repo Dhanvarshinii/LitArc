@@ -1,4 +1,8 @@
 import streamlit as st
+import pandas as pd
+import requests
+import io
+import plotly.express as px
 from corpus_data import corpus_data, image_urls
 
 st.markdown(f"""
@@ -101,3 +105,118 @@ if data:
 
 else:
     st.error("Corpus not found.")
+
+
+# Author-Play Catalogue
+st.markdown("""
+<h2 style='text-align: center; font-family: Georgia, serif;'>🎭 Author-Play Catalogue</h2>
+""", unsafe_allow_html=True)
+
+# Sample data
+API_BASE = "https://dracor.org/api/v1/"
+
+@st.cache_data
+def fetch_metadata(corpus_name: str) -> pd.DataFrame:
+    url = f"{API_BASE}corpora/{corpus_name}/metadata/csv"
+    resp = requests.get(url)
+    resp.raise_for_status()
+    return pd.read_csv(io.StringIO(resp.text))
+
+# Select corpus
+corpus_code = "ita"
+df_meta = fetch_metadata(corpus_code)
+
+# Validate required columns
+required_columns = ["firstAuthor", "title", "subtitle", "yearPrinted"]
+missing = [col for col in required_columns if col not in df_meta.columns]
+
+if missing:
+    st.error(f"Required columns not found in metadata: {missing}")
+    st.stop()
+
+# Prepare and rename for display
+df_show = df_meta[required_columns].rename(columns={
+    "firstAuthor": "Author",
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "yearPrinted": "Year Printed"
+})
+
+# Inject custom scrollable style and display the table
+st.markdown("""
+<style>
+.center-table-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.scroll-table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    width: 90%;
+}
+
+/* Style the actual table */
+.scroll-table-wrapper table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1.05em;
+}
+
+.scroll-table-wrapper th {
+    background-color: #8B0000;
+    color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 12px 18px;
+    border-bottom: 2px solid #ddd;
+    text-align: center;
+}
+
+.scroll-table-wrapper td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+.scroll-table-wrapper tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Render the table as scrollable HTML
+st.markdown(f"""
+<div class="center-table-container">
+    <div class="scroll-table-wrapper">
+        {df_show.to_html(index=False, escape=False)}
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+
+# 📊 Bar chart: Number of Plays per Author
+author_counts = df_show.groupby("Author").size().reset_index(name="Number of Plays")
+
+fig = px.bar(
+    author_counts,
+    x="Author",
+    y="Number of Plays",
+    labels={"Author": "Author", "Number of Plays": "Count of Plays"},
+    height=600,
+)
+
+st.markdown("""
+<h2 style='text-align: center; font-family: Georgia, serif;'>🎭 No of Authors per Play</h2>
+""", unsafe_allow_html=True)
+
+# Display the chart
+st.plotly_chart(fig, use_container_width=True)
